@@ -29,6 +29,14 @@ const billingSchema = new mongoose.Schema(
         status: { type: String, enum: ["Pending", "Paid"], default: "Pending" },
       },
     ],
+    radiologyCharges: [
+      {
+        radiologyRequestId: { type: mongoose.Schema.Types.ObjectId, ref: "RadiologyRequest" },
+        testName: String,
+        cost: { type: Number, default: 0 },
+        status: { type: String, enum: ["Pending", "Paid"], default: "Pending" },
+      },
+    ],
     totalAmount: {
       type: Number,
       default: 0,
@@ -57,8 +65,9 @@ billingSchema.pre("save", function () {
   const consultationAmt = this.consultation ? (this.consultation.fee || 0) : 0;
   const labAmt = this.labCharges.reduce((sum, item) => sum + (item.cost || 0), 0);
   const pharmacyAmt = this.pharmacyCharges.reduce((sum, item) => sum + (item.cost || 0), 0);
+  const radiologyAmt = this.radiologyCharges.reduce((sum, item) => sum + (item.cost || 0), 0);
 
-  this.totalAmount = consultationAmt + labAmt + pharmacyAmt;
+  this.totalAmount = consultationAmt + labAmt + pharmacyAmt + radiologyAmt;
   // No 'next()' call needed here
 });
 

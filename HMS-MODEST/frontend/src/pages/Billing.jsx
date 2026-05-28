@@ -112,22 +112,20 @@ function Billing() {
         <div className="flex bg-gray-100 p-1 rounded-lg w-fit mb-4">
           <button
             onClick={() => setActiveTab("pending")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
-              activeTab === "pending"
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === "pending"
                 ? "bg-white shadow"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             Pending ({billingPool.length})
           </button>
 
           <button
             onClick={() => setActiveTab("history")}
-            className={`px-4 py-2 rounded-md text-sm font-medium ${
-              activeTab === "history"
+            className={`px-4 py-2 rounded-md text-sm font-medium ${activeTab === "history"
                 ? "bg-white shadow"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             History
           </button>
@@ -153,7 +151,7 @@ function Billing() {
                 </div>
               ) : billingPool.length === 0 ? (
                 <div className="p-12 text-center text-gray-400">
-                   No pending patient balances currently in queue.
+                  No pending patient balances currently in queue.
                 </div>
               ) : (
                 <div className="overflow-x-auto">
@@ -191,6 +189,7 @@ function Billing() {
 
                           <td className="px-6 py-4">
                             <div className="flex flex-wrap gap-1.5 text-xs">
+
                               {bill.consultation?.status === "Pending" && (
                                 <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium">
                                   🩺 Consult
@@ -200,18 +199,27 @@ function Billing() {
                               {bill.labCharges?.filter(
                                 (l) => l.status === "Pending"
                               ).length > 0 && (
-                                <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-medium">
-                                  🧪 Labs
-                                </span>
-                              )}
+                                  <span className="bg-purple-50 text-purple-700 px-2 py-0.5 rounded font-medium">
+                                    🧪 Labs
+                                  </span>
+                                )}
 
                               {bill.pharmacyCharges?.filter(
                                 (p) => p.status === "Pending"
                               ).length > 0 && (
-                                <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium">
-                                  💊 Meds
-                                </span>
-                              )}
+                                  <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium">
+                                    💊 Meds
+                                  </span>
+                                )}
+
+                              {bill.radiologyCharges?.filter(
+                                (r) => r.status === "Pending"
+                              ).length > 0 && (
+                                  <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded font-medium">
+                                    🩻 Radiology
+                                  </span>
+                                )}
+
                             </div>
                           </td>
 
@@ -365,6 +373,15 @@ function Billing() {
                             {p.drugName}
                           </span>
                         ))}
+
+                        {bill.radiologyCharges?.map((r, i) => (
+                          <span
+                            key={i}
+                            className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-[10px] font-bold"
+                          >
+                            {r.testName}
+                          </span>
+                        ))}
                       </div>
                     </td>
 
@@ -437,14 +454,14 @@ function Billing() {
             <div className="border-y border-gray-300 py-4 mb-4 space-y-2">
               {selectedInvoice.consultation?.status !==
                 "Pending" && (
-                <div className="flex justify-between text-sm">
-                  <span>Consultation</span>
+                  <div className="flex justify-between text-sm">
+                    <span>Consultation</span>
 
-                  <span>
-                    KSh {selectedInvoice.consultation?.fee}
-                  </span>
-                </div>
-              )}
+                    <span>
+                      KSh {selectedInvoice.consultation?.fee}
+                    </span>
+                  </div>
+                )}
 
               {selectedInvoice.labCharges?.map((lab, i) => (
                 <div
@@ -471,6 +488,17 @@ function Billing() {
                   </div>
                 )
               )}
+
+              {selectedInvoice.radiologyCharges?.map((radio, i) => (
+                <div
+                  key={i}
+                  className="flex justify-between text-sm"
+                >
+                  <span>{radio.testName}</span>
+
+                  <span>KSh {radio.cost}</span>
+                </div>
+              ))}
             </div>
 
             <div className="flex justify-between font-bold text-lg">

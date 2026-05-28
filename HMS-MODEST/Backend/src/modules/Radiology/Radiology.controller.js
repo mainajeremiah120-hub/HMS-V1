@@ -90,16 +90,17 @@ export const processRadiologyRequest = async (req, res) => {
 // @desc    Upload radiology findings/report
 // @route   PUT /api/radiology/requests/:id/report
 // @access  Radiology, Admin
-export const uploadRadiologyReport = async (req, res) => {
+ export const uploadRadiologyReport = async (req, res) => {
   try {
     const { findings, impression, recommendation, radiologistNotes, imageUrls, imageCount } = req.body;
 
-    const radiologyRequest = await RadiologyRequest.findById(req.params.id);
+    const radiologyRequest = await RadiologyRequest.findById(req.params.id).populate("patient");
 
     if (!radiologyRequest) {
       return res.status(404).json({ message: "Radiology request not found" });
     }
 
+    // 1. Update the Request
     radiologyRequest.findings = findings || [];
     radiologyRequest.impression = impression || null;
     radiologyRequest.recommendation = recommendation || null;
@@ -112,18 +113,45 @@ export const uploadRadiologyReport = async (req, res) => {
 
     await radiologyRequest.save();
 
+    // 2. NEW: Add logic to update the Billing Record
+    // Find the patient's active, unpaid bill
+    let bill = await Billing.findOne({ 
+      patient: radiologyRequest.patient._id, 
+      paymentStatus: { $ne: "Paid" } 
+    });
+
+    const cost = getRadiologyScanCost(radiologyRequest.scanType);
+    const radiologyCharge = {
+      radiologyRequestId: radiologyRequest._id,
+      testName: radiologyRequest.scanType,
+      cost,
+      status: "Pending"
+    };
+
+    if (bill) {
+      bill.radiologyCharges.push(radiologyCharge);
+    } else {
+      bill = new Billing({
+        patient: radiologyRequest.patient._id,
+        radiologyCharges: [radiologyCharge],
+        paymentStatus: "Unpaid",
+        paymentMethod: "Cash"
+      });
+    }
+
+    await bill.save();
+
     const populated = await radiologyRequest.populate([
       { path: "patient", select: "fullName phone gender bloodGroup dateOfBirth" },
       { path: "doctor", select: "fullName department" },
       { path: "reportedBy", select: "fullName" },
     ]);
 
-    res.status(200).json({ message: "Radiology report uploaded successfully", radiologyRequest: populated });
+    res.status(200).json({ message: "Radiology report uploaded and billed successfully", radiologyRequest: populated });
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
-
 // @desc    Get completed radiology requests
 // @route   GET /api/radiology/requests/completed
 // @access  Radiology, Admin

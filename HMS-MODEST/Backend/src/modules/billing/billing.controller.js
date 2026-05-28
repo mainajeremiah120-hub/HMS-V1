@@ -58,7 +58,8 @@ export const settleInvoice = async (req, res) => {
     
     bill.labCharges = bill.labCharges.map(item => ({ ...item, status: "Paid" }));
     bill.pharmacyCharges = bill.pharmacyCharges.map(item => ({ ...item, status: "Paid" }));
-
+    bill.radiologyCharges = bill.radiologyCharges.map(item => ({ ...item, status: "Paid" }));
+    
     // Update global invoice settings
     bill.paymentStatus = "Paid";
     bill.paymentMethod = paymentMethod;
