@@ -15,6 +15,7 @@ const labRequestSchema = new mongoose.Schema(
     consultation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Consultation",
+      set: v => v === "" ? null : v,
       default: null,
     },
     testName: {

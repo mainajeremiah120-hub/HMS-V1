@@ -10,6 +10,7 @@ const adminLinks = [
   { path: "/reception", label: "Reception", icon: "🏨" },
   { path: "/lab", label: "Laboratory", icon: "🧪" },
   { path: "/pharmacy", label: "Pharmacy", icon: "💊" },
+  { path: "/radiology", label: "Radiology", icon: "📷" },
   { path: "/billing", label: "Billing / Cashier", icon: "💵" }, 
   { path: "/revenue", label: "Revenue", icon: "💰" }
 ];
@@ -40,6 +41,10 @@ const pharmacyLinks = [
 
 const labLinks = [
   { path: "/lab", label: "Laboratory", icon: "🧪" },
+];
+
+const radiologyLinks = [
+  { path: "/radiology", label: "Radiology", icon: "📷" },
 ];
 
 const roleLinks = {

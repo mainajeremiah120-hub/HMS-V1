@@ -11,6 +11,7 @@ import Lab from './pages/lab'
 import Pharmacy from './pages/Pharmacy'
 import Billing from "./pages/Billing";
 import Revenue from "./pages/revenue";
+import Radiology from "./pages/Radiology";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
         <Route path="/pharmacy" element={<Pharmacy />} />
         <Route path="/billing" element={<Billing />} />
         <Route path="/revenue" element={<Revenue />} />
+        <Route path="/radiology" element={<Radiology />} />
       </Route>
     </Routes>
   )

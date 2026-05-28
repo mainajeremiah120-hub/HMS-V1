@@ -1,17 +1,22 @@
 import mongoose from "mongoose";
 
+const radiologyFindingsSchema = new mongoose.Schema({
+  finding: { type: String, required: true },
+  severity: { type: String, enum: ["normal", "mild", "moderate", "severe"], default: "normal" },
+  location: { type: String, default: null },
+  notes: { type: String, default: null },
+});
+
 const radiologyRequestSchema = new mongoose.Schema(
   {
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
-      set: v => v === "" ? null : v,
       required: [true, "Patient is required"],
     },
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Staff",
-      set: v => v === "" ? null : v,
       required: [true, "Doctor is required"],
     },
     consultation: {
@@ -53,15 +58,38 @@ const radiologyRequestSchema = new mongoose.Schema(
       enum: ["pending", "processing", "completed", "cancelled"],
       default: "pending",
     },
-    findings: {
-      type: String,
-      default: null,
+    scanCost: {
+      type: Number,
+      required: [true, "Scan billing cost is required"],
+      default: 0,
     },
+    // Structured findings based on scan type
+    findings: [radiologyFindingsSchema],
+    // Overall impression
     impression: {
       type: String,
       default: null,
     },
-    reportedAt: {
+    // Radiologist recommendation
+    recommendation: {
+      type: String,
+      default: null,
+    },
+    // Radiologist notes
+    radiologistNotes: {
+      type: String,
+      default: null,
+    },
+    // Image metadata
+    imageCount: {
+      type: Number,
+      default: 0,
+    },
+    imageUrls: {
+      type: [String],
+      default: [],
+    },
+    resultUploadedAt: {
       type: Date,
       default: null,
     },

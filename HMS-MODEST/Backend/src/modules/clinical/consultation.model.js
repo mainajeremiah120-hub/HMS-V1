@@ -25,6 +25,7 @@ const consultationSchema = new mongoose.Schema(
     appointment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
+      set: v => v === "" ? null : v,
       default: null,
     },
     symptoms: {
