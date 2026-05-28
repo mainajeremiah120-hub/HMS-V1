@@ -14,7 +14,7 @@ function Revenue() {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("overview");
 
-  const COLORS = ["#0066CC", "#22C55E", "#FF6B6B", "#FFD700"];
+  const COLORS = ["#0066CC", "#22C55E", "#FF6B6B", "#FFD700", "#c92ebf"];
 
   useEffect(() => {
     fetchAllData();
@@ -106,6 +106,14 @@ function Revenue() {
                 KSh {department.pharmacyRevenue?.toLocaleString() || 0}
               </p>
             </div>
+            <div>
+              <div className="bg-white rounded-2xl p-6 shadow-lg border-l-4 border-red-600">
+                <p className="text-gray-600 text-sm font-semibold mb-2">Radiology</p>
+                <p className="text-3xl font-black text-red-600">
+                  KSh {department.radiologyRevenue?.toLocaleString() || 0}
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -171,6 +179,7 @@ function Revenue() {
         <Bar dataKey="consultationRevenue" fill="#22C55E" name="Consultation" />
         <Bar dataKey="labRevenue" fill="#FF6B6B" name="Lab" />
         <Bar dataKey="pharmacyRevenue" fill="#FFD700" name="Pharmacy" />
+          <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
       </BarChart>
     </ResponsiveContainer>
   </div>
@@ -191,6 +200,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#0066CC" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
+                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -211,6 +221,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
+                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -231,6 +242,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
+                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -270,7 +282,8 @@ function Revenue() {
                       data={[
                         { name: "Consultation", value: department.consultationRevenue || 0 },
                         { name: "Lab", value: department.labRevenue || 0 },
-                        { name: "Pharmacy", value: department.pharmacyRevenue || 0 }
+                        { name: "Pharmacy", value: department.pharmacyRevenue || 0 },
+                        { name: "Radiology", value: department.radiologyRevenue || 0 }
                       ]}
                       cx="50%"
                       cy="50%"
@@ -298,7 +311,8 @@ function Revenue() {
                   data={[
                     { name: "Consultation", count: department?.totalTransactions || 0, fill: "#0066CC" },
                     { name: "Lab", count: summary.reduce((sum, item) => sum + item.transactionCount, 0) / 3 || 0, fill: "#22C55E" },
-                    { name: "Pharmacy", count: summary.reduce((sum, item) => sum + item.transactionCount, 0) / 3 || 0, fill: "#FF6B6B" }
+                    { name: "Pharmacy", count: summary.reduce((sum, item) => sum + item.transactionCount, 0) / 3 || 0, fill: "#FF6B6B" },
+                    { name: "Radiology", count: summary.reduce((sum, item) => sum + item.transactionCount, 0) / 3 || 0, fill: "#c92ebf" }
                   ]}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
@@ -348,6 +362,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
+                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -368,6 +383,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
+                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>

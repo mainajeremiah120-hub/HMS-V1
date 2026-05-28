@@ -18,7 +18,7 @@ const revenueSchema = new mongoose.Schema(
     },
     category: { 
       type: String, 
-      enum: ["Consultation", "Lab", "Pharmacy", "Total"], 
+      enum: ["Consultation", "Lab", "Pharmacy","Radiology", "Total"], 
       required: true 
     },
     paymentMethod: { 

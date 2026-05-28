@@ -10,6 +10,7 @@ export const getRevenueSummary = async (req, res) => {
           consultationRevenue: { $ifNull: ["$consultation.fee", 0] },
           labRevenue: { $sum: "$labCharges.cost" },
           pharmacyRevenue: { $sum: "$pharmacyCharges.cost" },
+          radiologyRevenue: { $sum: "$radiologyCharges.cost" },
           totalAmount: 1
         }
       },
@@ -24,6 +25,7 @@ export const getRevenueSummary = async (req, res) => {
           totalConsultation: { $sum: "$consultationRevenue" },
           totalLab: { $sum: "$labRevenue" },
           totalPharmacy: { $sum: "$pharmacyRevenue" },
+          totalRadiology: { $sum: "$radiologyRevenue" },
           transactionCount: { $sum: 1 }
         }
       },
@@ -48,6 +50,7 @@ export const getDepartmentRevenue = async (req, res) => {
           consultationRevenue: { $sum: "$consultation.fee" },
           labRevenue: { $sum: { $sum: "$labCharges.cost" } },
           pharmacyRevenue: { $sum: { $sum: "$pharmacyCharges.cost" } },
+          radiologyRevenue: { $sum: { $sum: "$radiologyCharges.cost" } },
           totalTransactions: { $sum: 1 }
         }
       }
@@ -95,6 +98,7 @@ export const getDailySummary = async (req, res) => {
           consultationRevenue: { $sum: "$consultation.fee" },
           labRevenue: { $sum: { $sum: "$labCharges.cost" } },
           pharmacyRevenue: { $sum: { $sum: "$pharmacyCharges.cost" } },
+          radiologyRevenue: { $sum: { $sum: "$radiologyCharges.cost" } },
           transactionCount: { $sum: 1 }
         }
       },
@@ -121,6 +125,7 @@ export const getWeeklyRevenue = async (req, res) => {
           totalConsultation: { $sum: "$consultation.fee" },
           totalLab: { $sum: { $sum: "$labCharges.cost" } },
           totalPharmacy: { $sum: { $sum: "$pharmacyCharges.cost" } },
+          totalRadiology: { $sum: { $sum: "$radiologyCharges.cost" } },
           transactionCount: { $sum: 1 }
         }
       },
@@ -148,6 +153,7 @@ export const getMonthlyRevenue = async (req, res) => {
           totalConsultation: { $sum: "$consultation.fee" },
           totalLab: { $sum: { $sum: "$labCharges.cost" } },
           totalPharmacy: { $sum: { $sum: "$pharmacyCharges.cost" } },
+          totalRadiology: { $sum: { $sum: "$radiologyCharges.cost" } },
           transactionCount: { $sum: 1 }
         }
       },
@@ -171,6 +177,7 @@ export const getYearlyRevenue = async (req, res) => {
           totalConsultation: { $sum: "$consultation.fee" },
           totalLab: { $sum: { $sum: "$labCharges.cost" } },
           totalPharmacy: { $sum: { $sum: "$pharmacyCharges.cost" } },
+          totalRadiology: { $sum: { $sum: "$radiologyCharges.cost" } },
           totalTransactions: { $sum: 1 }
         }
       },
