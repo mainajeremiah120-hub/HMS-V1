@@ -11,7 +11,9 @@ import {
   getPatientRadiologyResults,
   cancelRadiologyRequest,
   deleteRadiologyRequest,
+  uploadImages,
 } from "./radiology.controller.js";
+import { uploadMiddleware } from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
@@ -19,6 +21,9 @@ const radiologyAccess = authorizeRoles("admin", "nurse", "doctor", "radiology");
 
 // Get all pending/processing requests
 router.get("/requests", protect, radiologyAccess, getAllRadiologyRequests);
+
+// Upload multiple radiology images to Cloudinary / local fallback
+router.post("/upload", protect, radiologyAccess, uploadMiddleware.array("files", 10), uploadImages);
 
 // Get completed requests
 router.get("/requests/completed", protect, radiologyAccess, getCompletedRadiologyRequests);

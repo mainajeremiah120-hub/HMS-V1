@@ -1,6 +1,7 @@
 import RadiologyRequest from "../clinical/radiologyRequest.model.js";
 import { getRadiologyTemplate, getRadiologyScanCost } from "../radiology/radiologyTemplates.js";
 import Billing from "../billing/billing.model.js";
+import { uploadImageStream } from "../../config/cloudinary.js";
 
 // @desc    Get all pending/processing radiology requests
 // @route   GET /api/radiology/requests
@@ -211,5 +212,31 @@ export const deleteRadiologyRequest = async (req, res) => {
     return res.status(200).json({ success: true, message: "Radiology record successfully deleted." });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// @desc    Upload multiple radiology scan images to Cloudinary (or local fallback)
+// @route   POST /api/radiology/upload
+// @access  Radiology, Admin
+export const uploadImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: "No files uploaded" });
+    }
+
+    const uploadPromises = req.files.map((file) =>
+      uploadImageStream(file.buffer, file.originalname)
+    );
+
+    const imageUrls = await Promise.all(uploadPromises);
+
+    res.status(200).json({
+      message: "Images uploaded successfully",
+      urls: imageUrls,
+      count: imageUrls.length,
+    });
+  } catch (error) {
+    console.error("Radiology upload error:", error);
+    res.status(500).json({ message: "Failed to upload images", error: error.message });
   }
 };

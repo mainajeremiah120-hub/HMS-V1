@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 
+const radiologyFindingsSchema = new mongoose.Schema({
+  finding: { type: String, required: true },
+  severity: { type: String, enum: ["normal", "mild", "moderate", "severe"], default: "normal" },
+  location: { type: String, default: null },
+  notes: { type: String, default: null },
+});
+
 const radiologyRequestSchema = new mongoose.Schema(
   {
     patient: {
@@ -53,15 +60,28 @@ const radiologyRequestSchema = new mongoose.Schema(
       enum: ["pending", "processing", "completed", "cancelled"],
       default: "pending",
     },
-    findings: {
-      type: String,
-      default: null,
-    },
+    findings: [radiologyFindingsSchema],
     impression: {
       type: String,
       default: null,
     },
-    reportedAt: {
+    recommendation: {
+      type: String,
+      default: null,
+    },
+    radiologistNotes: {
+      type: String,
+      default: null,
+    },
+    imageCount: {
+      type: Number,
+      default: 0,
+    },
+    imageUrls: {
+      type: [String],
+      default: [],
+    },
+    resultUploadedAt: {
       type: Date,
       default: null,
     },
