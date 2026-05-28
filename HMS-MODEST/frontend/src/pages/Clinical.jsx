@@ -143,6 +143,9 @@ function AppointmentsTab() {
 
 // ==================== CONSULTATION TAB ====================
 function ConsultationTab({ onConsultationCreated }) {
+  const [showConsultationHistory, setShowConsultationHistory] = useState(false);
+  const [consultationHistory, setConsultationHistory] = useState([]);
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [patientList, setPatientList] = useState([]);
   const [aiSuggestion, setAiSuggestion] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
@@ -150,6 +153,7 @@ function ConsultationTab({ onConsultationCreated }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
+
     patient: "",
     symptoms: "",
     chiefComplaint: "",
@@ -174,6 +178,7 @@ function ConsultationTab({ onConsultationCreated }) {
       respiratoryRate: "",
     },
   });
+  const [previousConsultation, setPreviousConsultation] = useState(null);
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -184,7 +189,52 @@ function ConsultationTab({ onConsultationCreated }) {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+
+    // Auto-fill from previous consultation when patient is selected
+    if (name === "patient" && value) {
+      fetchPreviousConsultation(value);
+    }
+  };
+
+  const fetchPreviousConsultation = async (patientId) => {
+    try {
+      // Get all consultations for this patient and pick the latest
+      const res = await API.get(`/clinical/patients/${patientId}`);
+      if (res.data.consultations && res.data.consultations.length > 0) {
+        const latest = res.data.consultations[0]; // Most recent
+        setPreviousConsultation(latest);
+
+        // Auto-fill the clinical fields
+        setFormData(prev => ({
+          ...prev,
+          chiefComplaint: latest.chiefComplaint || "",
+          historyOfPresentingIllness: latest.historyOfPresentingIllness || "",
+          reviewOfOtherSystems: latest.reviewOfOtherSystems || "",
+          surgicalHistory: latest.surgicalHistory || "",
+          familyHistory: latest.familyHistory || "",
+          systemicExamination: latest.systemicExamination || "",
+          diagnosis: latest.diagnosis || "",
+          icd10Code: latest.icd10Code || "",
+          icd10Description: latest.icd10Description || "",
+        }));
+      }
+    } catch (err) {
+      console.log("No previous consultation found or error:", err.message);
+      setPreviousConsultation(null);
+    }
+  };
+
+  const fetchConsultationHistory = async (patientId) => {
+    try {
+      const res = await API.get(`/clinical/patients/${patientId}`);
+      setConsultationHistory(res.data.consultations || []);
+      setSelectedPatientId(patientId);
+      setShowConsultationHistory(true);
+    } catch (err) {
+      alert("Failed to fetch consultation history: " + err.message);
+    }
   };
 
   const handleVitalChange = (e) => {
@@ -243,19 +293,19 @@ function ConsultationTab({ onConsultationCreated }) {
 
       setSuccess("Consultation created successfully!");
       setFormData({
-        patient: "", 
-        symptoms: "", 
+        patient: "",
+        symptoms: "",
         chiefComplaint: "",
         historyOfPresentingIllness: "",
         reviewOfOtherSystems: "",
         surgicalHistory: "",
         familyHistory: "",
         systemicExamination: "",
-        diagnosis: "", 
+        diagnosis: "",
         icd10Code: "",
-        icd10Description: "", 
-        notes: "", 
-        followUpDate: "", 
+        icd10Description: "",
+        notes: "",
+        followUpDate: "",
         consultationFee: 500,
         vitals: { bloodPressure: "", temperature: "", pulse: "", weight: "", height: "", oxygenSaturation: "", respiratoryRate: "" },
       });
@@ -274,13 +324,36 @@ function ConsultationTab({ onConsultationCreated }) {
       {error && <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="font-semibold text-gray-700 mb-4">Patient</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-gray-700">Patient</h3>
+            {formData.patient && (
+              <button
+                type="button"
+                onClick={() => fetchConsultationHistory(formData.patient)}
+                className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 transition"
+              >
+                📋 View History
+              </button>
+            )}
+          </div>
           <select name="patient" value={formData.patient} onChange={handleChange} required className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
             <option value="">Select patient</option>
             {patientList.map((p) => (
               <option key={p._id} value={p._id}>{p.fullName} — {p.phone}</option>
             ))}
           </select>
+
+          {previousConsultation && (
+            <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-xs text-blue-700 font-semibold">✅ Previous consultation found!</p>
+              <p className="text-xs text-blue-600 mt-1">
+                Last visit: {new Date(previousConsultation.createdAt).toLocaleDateString()}
+              </p>
+              <p className="text-xs text-blue-600">
+                Diagnosis: {previousConsultation.diagnosis || "N/A"}
+              </p>
+            </div>
+          )}
         </div>
 
         <div className="bg-white rounded-xl shadow p-6">
@@ -402,7 +475,7 @@ function ConsultationTab({ onConsultationCreated }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Rate Category</label>
-              <select 
+              <select
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm"
                 onChange={(e) => {
                   let fee = 500;
@@ -418,13 +491,13 @@ function ConsultationTab({ onConsultationCreated }) {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Consultation Fee (KSh)</label>
-              <input 
-                type="number" 
-                name="consultationFee" 
-                value={formData.consultationFee} 
+              <input
+                type="number"
+                name="consultationFee"
+                value={formData.consultationFee}
                 onChange={(e) => setFormData({ ...formData, consultationFee: Number(e.target.value) })}
                 required
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold text-gray-800" 
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 font-semibold text-gray-800"
               />
             </div>
           </div>
@@ -437,10 +510,60 @@ function ConsultationTab({ onConsultationCreated }) {
           {loading ? "Saving..." : "Save Consultation"}
         </button>
       </form>
+      {showConsultationHistory && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gray-50 border-b p-4 flex justify-between items-center">
+              <h3 className="font-semibold text-gray-700">Consultation History</h3>
+              <button
+                onClick={() => setShowConsultationHistory(false)}
+                className="text-gray-500 hover:text-gray-700 text-xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {consultationHistory.length === 0 ? (
+                <p className="text-center text-gray-500 py-8">No consultations found</p>
+              ) : (
+                consultationHistory.map((consultation, idx) => (
+                  <div key={consultation._id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-gray-700">Visit #{consultationHistory.length - idx}</h4>
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                        {new Date(consultation.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 text-sm">
+                      {consultation.chiefComplaint && (
+                        <p><span className="font-medium text-gray-600">C/O:</span> {consultation.chiefComplaint}</p>
+                      )}
+                      {consultation.diagnosis && (
+                        <p><span className="font-medium text-gray-600">Diagnosis:</span> {consultation.diagnosis}</p>
+                      )}
+                      {consultation.icd10Code && (
+                        <p><span className="font-medium text-gray-600">ICD-10:</span> {consultation.icd10Code}</p>
+                      )}
+                      {consultation.notes && (
+                        <p><span className="font-medium text-gray-600">Notes:</span> {consultation.notes}</p>
+                      )}
+                      {consultation.followUpDate && (
+                        <p><span className="font-medium text-gray-600">Follow-up:</span> {new Date(consultation.followUpDate).toLocaleDateString()}</p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
-
 
 // ==================== PRESCRIPTIONS TAB ====================
 function PrescriptionsTab() {
@@ -456,34 +579,34 @@ function PrescriptionsTab() {
     medications: [{ drugName: "", dosage: "", frequency: "", duration: "", instructions: "" }],
   });
 
-useEffect(() => {
-  (async () => {
-    try {
-      // Fetch data sequentially to prevent aggregate failures
-      const patientsRes = await API.get("/patients");
-      const inventoryRes = await API.get("/pharmacy/inventory");
+  useEffect(() => {
+    (async () => {
+      try {
+        // Fetch data sequentially to prevent aggregate failures
+        const patientsRes = await API.get("/patients");
+        const inventoryRes = await API.get("/pharmacy/inventory");
 
-      console.log("Patients Data:", patientsRes.data);
-      console.log("Inventory Data:", inventoryRes.data);
+        console.log("Patients Data:", patientsRes.data);
+        console.log("Inventory Data:", inventoryRes.data);
 
-      if (patientsRes?.data) setPatientList(patientsRes.data);
+        if (patientsRes?.data) setPatientList(patientsRes.data);
 
-      // Robust inventory handling
-      const invData = inventoryRes.data;
-      // If the data is nested inside an object (common in Express), 
-      // we check for common keys like 'data', 'items', or 'inventory'
-      const finalInventory = Array.isArray(invData) 
-        ? invData 
-        : (invData.data || invData.items || []);
-      
-      setInventory(finalInventory);
-      console.log("Inventory State Set To:", finalInventory);
+        // Robust inventory handling
+        const invData = inventoryRes.data;
+        // If the data is nested inside an object (common in Express), 
+        // we check for common keys like 'data', 'items', or 'inventory'
+        const finalInventory = Array.isArray(invData)
+          ? invData
+          : (invData.data || invData.items || []);
 
-    } catch (err) {
-      console.error("Data Fetching Error:", err);
-    }
-  })();
-}, []);
+        setInventory(finalInventory);
+        console.log("Inventory State Set To:", finalInventory);
+
+      } catch (err) {
+        console.error("Data Fetching Error:", err);
+      }
+    })();
+  }, []);
   const handleMedChange = (index, e) => {
     const meds = [...formData.medications];
     meds[index][e.target.name] = e.target.value;
@@ -545,7 +668,7 @@ useEffect(() => {
       <h2 className="text-lg font-semibold text-gray-700 mb-6">Write Prescription</h2>
       {success && <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm">{success}</div>}
       {error && <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="bg-white rounded-xl shadow p-6">
           <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
@@ -575,7 +698,7 @@ useEffect(() => {
                   <select name="drugName" value={med.drugName} onChange={(e) => handleMedChange(index, e)} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
                     <option value="">Select a drug...</option>
                     {inventory.map((item) => (
-                        <option key={item._id} value={item.itemName}>{item.itemName}</option>
+                      <option key={item._id} value={item.itemName}>{item.itemName}</option>
                     ))}
                   </select>
                 </div>
@@ -596,7 +719,7 @@ useEffect(() => {
           <button type="button" onClick={handleCheckInteraction} disabled={interactionLoading} className="bg-orange-500 text-white px-4 py-2 rounded-lg text-sm hover:bg-orange-600 transition disabled:opacity-50">
             {interactionLoading ? "Checking..." : "⚠️ Check Drug Interactions"}
           </button>
-          
+
           {interactionResult && (
             <div className={`mt-4 rounded-xl p-4 ${interactionResult.hasInteractions ? "bg-red-50 border border-red-200" : "bg-green-50 border border-green-200"}`}>
               <h4 className={`font-semibold mb-2 ${interactionResult.hasInteractions ? "text-red-700" : "text-green-700"}`}>
@@ -620,11 +743,11 @@ function LabTab({ activeConsultationId }) {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    patient: "", 
-    consultation: activeConsultationId || "", 
-    testName: "", 
-    testType: "", 
-    urgency: "routine", 
+    patient: "",
+    consultation: activeConsultationId || "",
+    testName: "",
+    testType: "",
+    urgency: "routine",
     clinicalNotes: "",
   });
 
@@ -650,13 +773,13 @@ function LabTab({ activeConsultationId }) {
     try {
       await API.post("/clinical/lab-requests", formData);
       setSuccess("Lab request sent successfully!");
-      setFormData({ 
-        patient: "", 
-        consultation: activeConsultationId || "", 
-        testName: "", 
-        testType: "", 
-        urgency: "routine", 
-        clinicalNotes: "" 
+      setFormData({
+        patient: "",
+        consultation: activeConsultationId || "",
+        testName: "",
+        testType: "",
+        urgency: "routine",
+        clinicalNotes: ""
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create lab request");
@@ -718,11 +841,11 @@ function RadiologyTab({ activeConsultationId }) { // ✅ Added prop
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    patient: "", 
+    patient: "",
     consultation: activeConsultationId || "", // ✅ Linked ID
-    scanType: "", 
-    bodyPart: "", 
-    urgency: "routine", 
+    scanType: "",
+    bodyPart: "",
+    urgency: "routine",
     clinicalNotes: "",
   });
 
@@ -749,13 +872,13 @@ function RadiologyTab({ activeConsultationId }) { // ✅ Added prop
     try {
       await API.post("/clinical/radiology-requests", formData);
       setSuccess("Radiology request sent successfully!");
-      setFormData({ 
-        patient: "", 
+      setFormData({
+        patient: "",
         consultation: activeConsultationId || "", // ✅ Clear safely
-        scanType: "", 
-        bodyPart: "", 
-        urgency: "routine", 
-        clinicalNotes: "" 
+        scanType: "",
+        bodyPart: "",
+        urgency: "routine",
+        clinicalNotes: ""
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create radiology request");
@@ -817,10 +940,10 @@ function WardTab({ activeConsultationId }) { // ✅ Added prop
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
-    patient: "", 
+    patient: "",
     consultation: activeConsultationId || "", // ✅ Linked ID
-    wardType: "", 
-    admissionReason: "", 
+    wardType: "",
+    admissionReason: "",
     urgency: "routine",
   });
 
@@ -847,12 +970,12 @@ function WardTab({ activeConsultationId }) { // ✅ Added prop
     try {
       await API.post("/clinical/ward-requests", formData);
       setSuccess("Ward admission request sent successfully!");
-      setFormData({ 
-        patient: "", 
+      setFormData({
+        patient: "",
         consultation: activeConsultationId || "", // ✅ Clear safely
-        wardType: "", 
-        admissionReason: "", 
-        urgency: "routine" 
+        wardType: "",
+        admissionReason: "",
+        urgency: "routine"
       });
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create ward request");
@@ -921,13 +1044,13 @@ function Clinical() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Clinical Consultation</h1>
-      
+
       {/* Active Encounter Ribbon Notification */}
       {activeConsultationId && (
         <div className="bg-blue-50 border border-blue-200 text-blue-700 rounded-xl px-4 py-2 mb-4 text-xs font-medium flex justify-between items-center animate-pulse">
           <span>🎯 Active Encounter Linked (ID: {activeConsultationId}). Downstream order items will link automatically.</span>
-          <button 
-            onClick={() => setActiveConsultationId("")} 
+          <button
+            onClick={() => setActiveConsultationId("")}
             className="underline hover:text-blue-900 ml-2"
           >
             Clear Session
@@ -940,24 +1063,23 @@ function Clinical() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${
-              activeTab === tab.id ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
-            }`}
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition ${activeTab === tab.id ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-100"
+              }`}
           >
             {tab.label}
           </button>
         ))}
       </div>
-      
+
       {activeTab === "appointments" && <AppointmentsTab />}
-      
+
       {/* ✅ Feeds the session ID back up to parent on creation */}
       {activeTab === "consultation" && (
         <ConsultationTab onConsultationCreated={(id) => setActiveConsultationId(id)} />
       )}
-      
+
       {activeTab === "prescriptions" && <PrescriptionsTab />}
-      
+
       {/* ✅ Secure downlinks to catch data links automatically */}
       {activeTab === "lab" && (
         <LabTab activeConsultationId={activeConsultationId} />
