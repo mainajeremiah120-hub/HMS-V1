@@ -441,7 +441,6 @@ function ReportEntryModal({ request, onClose, onSave }) {
     </div>
   );
 }
-
 // ==================== REPORT MODAL ====================
 function RadiologyReportModal({ request, onClose }) {
   const handlePrint = () => window.print();
@@ -449,6 +448,7 @@ function RadiologyReportModal({ request, onClose }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-screen overflow-y-auto">
+        {/* Header - Hidden in Print */}
         <div className="flex justify-between items-center p-4 border-b no-print">
           <h2 className="text-lg font-bold text-gray-800">Radiology Report</h2>
           <div className="flex gap-2">
@@ -456,27 +456,95 @@ function RadiologyReportModal({ request, onClose }) {
             <button onClick={onClose} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-200 transition">Close</button>
           </div>
         </div>
+
+        {/* Print Area */}
         <div className="print-area p-8">
           <div className="text-center border-b pb-6 mb-6">
             <h1 className="text-2xl font-bold text-gray-800">Hospital Management System</h1>
             <p className="text-gray-500">Radiology Department</p>
           </div>
-          {/* ... (Request details, findings table, etc. remain the same as provided) */}
-          {/* Added logic to display images in the print report if needed */}
+
+          {/* Patient Info */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="font-semibold text-gray-700">Patient: {request.patient?.fullName}</h3>
+              <p className="text-sm">Scan Type: {request.scanType}</p>
+            </div>
+          </div>
+
+          {/* Findings Table */}
+          {request.findings && request.findings.length > 0 && (
+            <div className="mb-6">
+              <h3 className="font-semibold text-gray-700 mb-2">Findings</h3>
+              <table className="w-full text-sm border border-gray-200">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-4 py-2 border text-left">Finding</th>
+                    <th className="px-4 py-2 border text-left">Location</th>
+                    <th className="px-4 py-2 border text-left">Severity</th>
+                    <th className="px-4 py-2 border text-left">Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {request.findings.map((f, i) => (
+                    <tr key={i}>
+                      <td className="px-4 py-2 border">{f.finding}</td>
+                      <td className="px-4 py-2 border">{f.location || "—"}</td>
+                      <td className="px-4 py-2 border capitalize">{f.severity}</td>
+                      <td className="px-4 py-2 border">{f.notes || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Impression, Recommendation, Notes */}
+          {request.impression && (
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-700">Impression</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{request.impression}</p>
+            </div>
+          )}
+
+          {request.recommendation && (
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-700">Recommendation</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{request.recommendation}</p>
+            </div>
+          )}
+
+          {request.radiologistNotes && (
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-700">Radiologist Notes</h3>
+              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{request.radiologistNotes}</p>
+            </div>
+          )}
+
+          {/* Attached Images */}
+{/* ... end of other sections ... */}
+          
+          {/* Attached Images */}
           {request.imageUrls && request.imageUrls.length > 0 && (
-             <div className="mt-6">
-                <h3 className="font-semibold text-gray-700 mb-2">Attached Images</h3>
-                <div className="flex gap-2">
-                    {request.imageUrls.map((url, i) => <img key={i} src={url} alt="scan" className="w-32 h-32 object-cover border" />)}
-                </div>
-             </div>
+            <div className="mt-6">
+              <h3 className="font-semibold text-gray-700 mb-4">Attached Images</h3>
+              <div className="flex flex-wrap gap-4">
+                {request.imageUrls.map((url, i) => (
+                  <img 
+                    key={i} 
+                    src={url} 
+                    alt="scan" 
+                    className="w-full max-w-lg h-auto border rounded-lg shadow-sm" 
+                  />
+                ))}
+              </div>
+            </div>
           )}
         </div>
       </div>
     </div>
   );
 }
-
 // ==================== MAIN PAGE ====================
 const tabs = [
   { id: "pending", label: "⏳ Pending" },
