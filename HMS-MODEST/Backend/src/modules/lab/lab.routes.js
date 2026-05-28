@@ -9,7 +9,8 @@ import {
   getCompletedLabRequests,
   getPatientLabHistory,
   cancelLabRequest,
-  deleteLabRequest
+  deleteLabRequest,
+  getPatientLabResults
 } from "./lab.controller.js";
 
 const router = express.Router();
@@ -28,6 +29,7 @@ router.get("/requests/:id", protect, labAccess, getLabRequestById);
 // Get template for a test type
 router.get("/template/:testType", protect, labAccess, getTemplate);
 
+
 // Mark as processing
 router.put("/requests/:id/process", protect, labAccess, processLabRequest);
 
@@ -43,3 +45,6 @@ router.get("/patients/:patientId", protect, labAccess, getPatientLabHistory);
 //delete request
 router.delete("/requests/:id", protect, labAccess, deleteLabRequest);
 export default router;
+
+// Get patient's completed lab results
+router.get("/results/:patientId", protect, labAccess, getPatientLabResults);

@@ -193,3 +193,22 @@ export const deleteLabRequest = async (req, res) => {
     return res.status(500).json({ success: false, error: err.message });
   }
 };
+
+// @desc    Get patient's completed lab results (for doctor to view)
+// @route   GET /api/lab/results/:patientId
+// @access  Doctor, Lab, Admin
+export const getPatientLabResults = async (req, res) => {
+  try {
+    const labRequests = await LabRequest.find({ 
+      patient: req.params.patientId,
+      status: "completed"
+    })
+      .populate("doctor", "fullName department")
+      .populate("processedBy", "fullName")
+      .sort({ resultUploadedAt: -1 });
+
+    res.status(200).json(labRequests);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

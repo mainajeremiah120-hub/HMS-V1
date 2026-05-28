@@ -742,6 +742,11 @@ function LabTab({ activeConsultationId }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [selectedPatientForResults, setSelectedPatientForResults] = useState("");
+  const [labResults, setLabResults] = useState([]);
+  const [resultsLoading, setResultsLoading] = useState(false);
+  const [expandedResult, setExpandedResult] = useState(null);
   const [formData, setFormData] = useState({
     patient: "",
     consultation: activeConsultationId || "",
@@ -788,61 +793,414 @@ function LabTab({ activeConsultationId }) {
     }
   };
 
+  const fetchLabResults = async (patientId) => {
+    if (!patientId) {
+      alert("Please select a patient");
+      return;
+    }
+
+    setResultsLoading(true);
+    try {
+      const res = await API.get(`/lab/results/${patientId}`);
+      setLabResults(res.data || []);
+      setSelectedPatientForResults(patientId);
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to fetch lab results");
+      setLabResults([]);
+    } finally {
+      setResultsLoading(false);
+    }
+  };
+
+  const getPatientName = (patientId) => {
+    const patient = patientList.find((p) => p._id === patientId);
+    return patient ? patient.fullName : "Unknown Patient";
+  };
+
+  const getFlagColor = (flag) => {
+    switch (flag) {
+      case "NORMAL":
+        return "bg-green-100 text-green-700";
+      case "LOW":
+        return "bg-yellow-100 text-yellow-700";
+      case "HIGH":
+        return "bg-orange-100 text-orange-700";
+      case "CRITICAL LOW":
+        return "bg-red-100 text-red-700";
+      case "CRITICAL HIGH":
+        return "bg-red-100 text-red-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
+  const getUrgencyColor = (urgency) => {
+    switch (urgency) {
+      case "emergency":
+        return "bg-red-100 text-red-700";
+      case "urgent":
+        return "bg-orange-100 text-orange-700";
+      case "routine":
+        return "bg-blue-100 text-blue-700";
+      default:
+        return "bg-gray-100 text-gray-700";
+    }
+  };
+
   return (
-    <div>
-      <h2 className="text-lg font-semibold text-gray-700 mb-6">Request Lab Test</h2>
-      {success && <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm">{success}</div>}
-      {error && <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
-      <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
-          <select value={formData.patient} onChange={(e) => setFormData({ ...formData, patient: e.target.value })} required className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">Select patient</option>
-            {patientList.map((p) => <option key={p._id} value={p._id}>{p.fullName}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Test Name</label>
-          <input type="text" value={formData.testName} onChange={(e) => setFormData({ ...formData, testName: e.target.value })} required placeholder="e.g. Malaria RDT" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Test Type</label>
-          <select value={formData.testType} onChange={(e) => setFormData({ ...formData, testType: e.target.value })} required className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="">Select test type</option>
-            {["Blood Test", "Urine Test", "Stool Test", "Culture & Sensitivity", "HIV Test", "Malaria Test", "Liver Function Test", "Kidney Function Test", "Full Blood Count", "Blood Sugar", "Lipid Profile", "Thyroid Function", "Other"].map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
-          <select value={formData.urgency} onChange={(e) => setFormData({ ...formData, urgency: e.target.value })} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
-            <option value="routine">Routine</option>
-            <option value="urgent">Urgent</option>
-            <option value="emergency">Emergency</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Notes</label>
-          <textarea value={formData.clinicalNotes} onChange={(e) => setFormData({ ...formData, clinicalNotes: e.target.value })} rows={3} placeholder="Additional notes for lab..." className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
-        </div>
-        <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50">
-          {loading ? "Sending..." : "Send Lab Request"}
+    <div className="space-y-6">
+      {/* Tab Toggle Buttons */}
+      <div className="flex gap-3">
+        <button
+          onClick={() => setShowResults(false)}
+          className={`px-4 py-2 rounded-lg font-medium transition ${
+            !showResults
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          ➕ Request Lab Test
         </button>
-      </form>
+        <button
+          onClick={() => setShowResults(true)}
+          className={`px-4 py-2 rounded-lg font-medium transition ${
+            showResults
+              ? "bg-blue-600 text-white"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
+          📊 View Lab Results
+        </button>
+      </div>
+
+      {/* REQUEST LAB TEST SECTION */}
+      {!showResults && (
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-6">Request Lab Test</h2>
+          {success && <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg mb-4 text-sm">{success}</div>}
+          {error && <div className="bg-red-100 text-red-600 px-4 py-2 rounded-lg mb-4 text-sm">{error}</div>}
+          <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+              <select value={formData.patient} onChange={(e) => setFormData({ ...formData, patient: e.target.value })} required className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">Select patient</option>
+                {patientList.map((p) => <option key={p._id} value={p._id}>{p.fullName}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Test Name</label>
+              <input type="text" value={formData.testName} onChange={(e) => setFormData({ ...formData, testName: e.target.value })} required placeholder="e.g. Malaria RDT" className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Test Type</label>
+              <select value={formData.testType} onChange={(e) => setFormData({ ...formData, testType: e.target.value })} required className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">Select test type</option>
+                {["Blood Test", "Urine Test", "Stool Test", "Culture & Sensitivity", "HIV Test", "Malaria Test", "Liver Function Test", "Kidney Function Test", "Full Blood Count", "Blood Sugar", "Lipid Profile", "Thyroid Function", "Other"].map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+              <select value={formData.urgency} onChange={(e) => setFormData({ ...formData, urgency: e.target.value })} className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="routine">Routine</option>
+                <option value="urgent">Urgent</option>
+                <option value="emergency">Emergency</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Clinical Notes</label>
+              <textarea value={formData.clinicalNotes} onChange={(e) => setFormData({ ...formData, clinicalNotes: e.target.value })} rows={3} placeholder="Additional notes for lab..." className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+            </div>
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition disabled:opacity-50">
+              {loading ? "Sending..." : "Send Lab Request"}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* VIEW LAB RESULTS SECTION */}
+      {showResults && (
+        <div>
+          <h2 className="text-lg font-semibold text-gray-700 mb-6">View Lab Results</h2>
+
+          {/* Patient Selection */}
+          <div className="bg-white rounded-xl shadow p-6 mb-6">
+            <h3 className="font-semibold text-gray-700 mb-4">Select Patient</h3>
+            <div className="flex gap-4">
+              <select
+                value={selectedPatientForResults}
+                onChange={(e) => setSelectedPatientForResults(e.target.value)}
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                <option value="">Choose patient</option>
+                {patientList.map((p) => (
+                  <option key={p._id} value={p._id}>
+                    {p.fullName} — {p.phone}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => fetchLabResults(selectedPatientForResults)}
+                disabled={resultsLoading || !selectedPatientForResults}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 font-medium"
+              >
+                {resultsLoading ? "Loading..." : "🔍 Search Results"}
+              </button>
+            </div>
+          </div>
+
+          {/* Lab Results Display */}
+          {labResults.length > 0 && (
+            <div className="space-y-4">
+              {labResults.map((result, idx) => (
+                <div
+                  key={result._id}
+                  className="bg-white rounded-xl shadow overflow-hidden"
+                >
+                  {/* Result Header */}
+                  <div
+                    onClick={() =>
+                      setExpandedResult(
+                        expandedResult === result._id ? null : result._id
+                      )
+                    }
+                    className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 cursor-pointer hover:from-blue-100 hover:to-blue-200 transition"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 text-lg">
+                          {labResults.length - idx}. {result.testType}
+                        </h4>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Test Name: <span className="font-medium">{result.testName}</span>
+                        </p>
+                        <div className="flex gap-2 mt-2">
+                          <span
+                            className={`text-xs px-2 py-1 rounded-full font-medium ${getUrgencyColor(
+                              result.urgency
+                            )}`}
+                          >
+                            {result.urgency.toUpperCase()}
+                          </span>
+                          <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                            ✅ COMPLETED
+                          </span>
+                          <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                            {new Date(result.resultUploadedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <button className="text-2xl text-gray-400 hover:text-gray-600">
+                        {expandedResult === result._id ? "▼" : "▶"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {expandedResult === result._id && (
+                    <div className="p-6 border-t border-gray-200 space-y-6">
+                      {/* Clinical Notes */}
+                      {result.clinicalNotes && (
+                        <div className="bg-blue-50 rounded-lg p-4">
+                          <p className="text-xs font-semibold text-blue-700 mb-2">
+                            📋 CLINICAL NOTES
+                          </p>
+                          <p className="text-sm text-gray-700">{result.clinicalNotes}</p>
+                        </div>
+                      )}
+
+                      {/* Test Results Table */}
+                      {result.results && result.results.length > 0 ? (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="bg-gray-100 border-b border-gray-300">
+                                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                                  Parameter
+                                </th>
+                                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                                  Value
+                                </th>
+                                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                                  Unit
+                                </th>
+                                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                                  Reference Range
+                                </th>
+                                <th className="px-4 py-2 text-left font-semibold text-gray-700">
+                                  Status
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {result.results.map((param, idx) => (
+                                <tr
+                                  key={idx}
+                                  className={`border-b border-gray-200 ${
+                                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                                  }`}
+                                >
+                                  <td className="px-4 py-3 font-medium text-gray-800">
+                                    {param.parameter}
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-700 font-semibold">
+                                    {param.value || "—"}
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-600">
+                                    {param.unit || "—"}
+                                  </td>
+                                  <td className="px-4 py-3 text-xs text-gray-600 font-mono">
+                                    {param.referenceRange || "—"}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    {param.flag ? (
+                                      <span
+                                        className={`text-xs px-2 py-1 rounded-full font-medium ${getFlagColor(
+                                          param.flag
+                                        )}`}
+                                      >
+                                        {param.flag}
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">—</span>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      ) : (
+                        <div className="bg-gray-50 rounded-lg p-4 text-center text-gray-600 text-sm">
+                          No detailed results available
+                        </div>
+                      )}
+
+                      {/* Lab Interpretation */}
+                      {result.interpretation && (
+                        <div className="bg-purple-50 rounded-lg p-4">
+                          <p className="text-xs font-semibold text-purple-700 mb-2">
+                            🔬 LAB INTERPRETATION
+                          </p>
+                          <p className="text-sm text-gray-700 leading-relaxed">
+                            {result.interpretation}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Lab Technician Notes */}
+                      {result.labNotes && (
+                        <div className="bg-yellow-50 rounded-lg p-4">
+                          <p className="text-xs font-semibold text-yellow-700 mb-2">
+                            📝 LAB TECHNICIAN NOTES
+                          </p>
+                          <p className="text-sm text-gray-700">{result.labNotes}</p>
+                        </div>
+                      )}
+
+                      {/* Metadata Footer */}
+                      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Requested By
+                            </p>
+                            <p className="text-gray-800 font-medium">
+                              {result.doctor?.fullName || "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Processed By
+                            </p>
+                            <p className="text-gray-800 font-medium">
+                              {result.processedBy?.fullName || "—"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Result Date
+                            </p>
+                            <p className="text-gray-800 font-medium">
+                              {new Date(result.resultUploadedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Request Date
+                            </p>
+                            <p className="text-gray-800 font-medium">
+                              {new Date(result.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Test Cost
+                            </p>
+                            <p className="text-gray-800 font-medium">
+                              KSh {result.testCost}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 font-semibold">
+                              Status
+                            </p>
+                            <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">
+                              {result.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Print Button */}
+                      <button
+                        onClick={() => window.print()}
+                        className="w-full bg-gray-700 text-white py-2 rounded-lg hover:bg-gray-800 transition font-medium text-sm"
+                      >
+                        🖨️ Print Results
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!resultsLoading && selectedPatientForResults && labResults.length === 0 && (
+            <div className="bg-gray-50 rounded-xl p-12 text-center">
+              <p className="text-gray-500 text-lg">🔍 No completed lab results found</p>
+              <p className="text-gray-400 text-sm mt-2">
+                Lab results will appear here once tests are completed by the laboratory
+              </p>
+            </div>
+          )}
+
+          {/* Initial State */}
+          {!selectedPatientForResults && labResults.length === 0 && !resultsLoading && (
+            <div className="bg-blue-50 rounded-xl p-12 text-center border border-blue-200">
+              <p className="text-blue-700 text-lg font-medium">👆 Select a patient above</p>
+              <p className="text-blue-600 text-sm mt-2">
+                View all completed lab test results for the patient
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 // ==================== RADIOLOGY TAB ====================
-function RadiologyTab({ activeConsultationId }) { // ✅ Added prop
+function RadiologyTab({ activeConsultationId }) {
   const [patientList, setPatientList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     patient: "",
-    consultation: activeConsultationId || "", // ✅ Linked ID
+    consultation: activeConsultationId || "",
     scanType: "",
     bodyPart: "",
     urgency: "routine",
@@ -857,7 +1215,6 @@ function RadiologyTab({ activeConsultationId }) { // ✅ Added prop
     fetchPatients();
   }, []);
 
-  // ✅ Keep formData tracking active context links dynamically
   useEffect(() => {
     if (activeConsultationId) {
       setFormData((prev) => ({ ...prev, consultation: activeConsultationId }));
@@ -874,7 +1231,7 @@ function RadiologyTab({ activeConsultationId }) { // ✅ Added prop
       setSuccess("Radiology request sent successfully!");
       setFormData({
         patient: "",
-        consultation: activeConsultationId || "", // ✅ Clear safely
+        consultation: activeConsultationId || "",
         scanType: "",
         bodyPart: "",
         urgency: "routine",
