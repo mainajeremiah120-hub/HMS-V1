@@ -19,7 +19,7 @@ function PendingTab({ onProcess, onDelete, refreshKey }) {
   };
 
   const userRole = getUserRole();
-  const canDelete = userRole === "admin" || userRole === "radiology";
+  const canDelete = userRole === "admin" || userRole === "radiologist" || userRole === "radiology";
 
   const fetchRequests = async () => {
     try {
@@ -199,7 +199,7 @@ function CompletedTab({ onViewReport, onDelete, refreshKey }) {
   };
 
   const userRole = getUserRole();
-  const canDelete = userRole === "admin" || userRole === "radiology";
+  const canDelete = userRole === "admin" || userRole === "radiologist" || userRole === "radiology";
 
   const fetchRequests = async () => {
     try {

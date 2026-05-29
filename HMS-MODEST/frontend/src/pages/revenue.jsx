@@ -200,7 +200,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#0066CC" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
-                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
+                <Bar dataKey="totalRadiology" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -221,7 +221,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
-                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
+                <Bar dataKey="totalRadiology" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -242,7 +242,7 @@ function Revenue() {
                 <Bar dataKey="totalConsultation" fill="#22C55E" name="Consultation" />
                 <Bar dataKey="totalLab" fill="#FF6B6B" name="Lab" />
                 <Bar dataKey="totalPharmacy" fill="#FFD700" name="Pharmacy" />
-                <Bar dataKey="radiologyRevenue" fill="#c92ebf" name="Radiology" />
+                <Bar dataKey="totalRadiology" fill="#c92ebf" name="Radiology" />
               </BarChart>
             </ResponsiveContainer>
           </div>

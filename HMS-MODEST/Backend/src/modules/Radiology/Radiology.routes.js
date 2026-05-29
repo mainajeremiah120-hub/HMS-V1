@@ -17,7 +17,7 @@ import { uploadMiddleware } from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
-const radiologyAccess = authorizeRoles("admin", "nurse", "doctor", "radiology");
+const radiologyAccess = authorizeRoles("admin", "nurse", "doctor", "radiologist", "radiology");
 
 // Get all pending/processing requests
 router.get("/requests", protect, radiologyAccess, getAllRadiologyRequests);

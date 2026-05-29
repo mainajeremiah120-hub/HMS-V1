@@ -91,6 +91,8 @@ function Staff() {
   receptionist: "bg-yellow-100 text-yellow-700",
   lab: "bg-purple-100 text-purple-900",
   pharmacist: "bg-pink-100 text-pink-700",
+  radiologist: "bg-cyan-100 text-cyan-700",
+  cashier: "bg-gray-100 text-gray-700",
 };
 
   return (
@@ -213,6 +215,8 @@ function Staff() {
                   <option value="receptionist">Receptionist</option>
                   <option value="lab">Lab</option>
                   <option value="pharmacist">Pharmacist</option>
+                  <option value="radiologist">Radiologist</option>
+                  <option value="cashier">Cashier</option>
                 </select>
               </div>
 

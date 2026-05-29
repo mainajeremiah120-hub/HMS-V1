@@ -1,20 +1,32 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: "./.env" });
+
+const emailHost = process.env.EMAIL_HOST || "sandbox.smtp.mailtrap.io";
+const emailPort = Number(process.env.EMAIL_PORT || 2525);
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+
+if (!emailUser || !emailPass) {
+  console.error("Mail transporter configuration error: EMAIL_USER and EMAIL_PASS must be set in .env.");
+}
 
 const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-  port: 2525,
+  host: emailHost,
+  port: emailPort,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: emailUser,
+    pass: emailPass,
   },
-//   service: "gmail",
-//   auth: {
-//     user: process.env.EMAIL_USER,
-//     pass: process.env.EMAIL_PASS,
-//   },
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error(`Mail transporter verification failed for ${emailHost}:${emailPort}:`, error.message);
+  } else {
+    console.log(`Mail transporter is ready to send messages via ${emailHost}:${emailPort}.`);
+  }
 });
 
 const getEmailBody = ({ type, patientName, doctorName, date, time, reason }) => {
@@ -101,21 +113,21 @@ export const sendAppointmentNotification = async ({
   type,
 }) => {
   try {
-    await transporter.sendMail({
-      from: `"HMS System" <${process.env.EMAIL_USER}>`,
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || `"HMS System" <no-reply@hms.local>`,
       to,
       subject,
       html: getEmailBody({ type, patientName, doctorName, date, time, reason }),
     });
-    console.log(`Email sent to ${to}`);
+    console.log(`Email sent to ${to}: accepted=${info.accepted.join(", ")}, rejected=${info.rejected.join(", ")}`);
   } catch (error) {
     console.error(`Failed to send email to ${to}:`, error.message);
   }
 };
 export const sendStaffWelcomeEmail = async ({ to, fullName, role, email, password }) => {
   try {
-    await transporter.sendMail({
-      from: `"HMS System" <${process.env.EMAIL_USER}>`,
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || `"HMS System" <no-reply@hms.local>`,
       to,
       subject: "Welcome to HMS — Your Login Credentials",
       html: `
@@ -130,7 +142,7 @@ export const sendStaffWelcomeEmail = async ({ to, fullName, role, email, passwor
         <p><strong>Note:</strong> Please keep your credentials safe.</p>
       `,
     });
-    console.log(`Welcome email sent to ${to}`);
+    console.log(`Welcome email sent to ${to}: accepted=${info.accepted.join(", ")}, rejected=${info.rejected.join(", ")}`);
   } catch (error) {
     console.error(`Failed to send welcome email:`, error.message);
   }

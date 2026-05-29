@@ -50,10 +50,11 @@ const radiologyLinks = [
 const roleLinks = {
   admin: adminLinks,
   receptionist: receptionLinks,
-  cashier: cashierLinks, // 👈 Registered here
+  cashier: cashierLinks,
   doctor: doctorLinks,
   nurse: nurseLinks,
   pharmacist: pharmacyLinks,
+  radiologist: radiologyLinks,
   lab: labLinks,
 };
 
